@@ -5,7 +5,7 @@ import {EdgeArrows, QuickBar, type BarAction} from './components/QuickBar';
 import {Stage, type Slide} from './components/Stage';
 import {exitToLauncher, isWebOS, readSaverFlag, screenOff, writeSaverFlag} from './lib/luna';
 import {imageUrl, pool, shuffled, shuffledByCollection} from './lib/playlist';
-import {RADMUSEUM_SERVER, loadRadmuseum} from './lib/radmuseum';
+import {loadRadmuseum, radmuseumServerUrl} from './lib/radmuseum';
 import {buildOptions, loadSettings, saveSettings, type Settings} from './lib/settings';
 
 const FADE_MS = 1400;
@@ -42,10 +42,10 @@ export function App () {
 
 	// ---- the home collection from cybervolga: merged into the pool once the manifest arrives
 	useEffect(() => {
-		loadRadmuseum(RADMUSEUM_SERVER).then((list) => {
+		loadRadmuseum(radmuseumServerUrl()).then((list) => {
 			setCollections((old) => old.concat(list.map((a) => a.c).filter((c, i, arr) => arr.indexOf(c) === i && old.indexOf(c) === -1)));
 			setLoadedExtra(list.length);
-		}).catch(() => undefined);
+		}).catch((e) => say(`Gallery server unreachable: ${e && e.message ? e.message : e}`));
 	}, []);
 
 	const update = useCallback((next: Settings) => { settingsRef.current = next; setSettings(next); saveSettings(next); }, []);

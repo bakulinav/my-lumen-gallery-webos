@@ -6,6 +6,11 @@ import type {Artwork} from '../config/art';
 
 export const RADMUSEUM_SERVER = 'http://192.168.1.151:8790';
 
+/** the server can be overridden for tests: index.html?server=http://localhost:8790 */
+export function radmuseumServerUrl (): string {
+	return new URLSearchParams(window.location.search).get('server') || RADMUSEUM_SERVER;
+}
+
 let base = RADMUSEUM_SERVER;
 let extra: Artwork[] = [];
 
