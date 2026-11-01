@@ -76,8 +76,8 @@ class Handler(BaseHTTPRequestHandler):
                 return
         self._send(404, '{"error": "not found"}', "application/json")
 
-    def log_message(self, *args):
-        pass
+    def log_message(self, fmt, *args):
+        sys.stderr.write("%s %s\n" % (self.address_string(), fmt % args))
 
 
 if __name__ == "__main__":
