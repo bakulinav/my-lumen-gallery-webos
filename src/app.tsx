@@ -5,14 +5,17 @@ import {EdgeArrows, QuickBar, type BarAction} from './components/QuickBar';
 import {Stage, type Slide} from './components/Stage';
 import {exitToLauncher, isWebOS, readSaverFlag, screenOff, writeSaverFlag} from './lib/luna';
 import {imageUrl, pool, shuffled, shuffledByCollection} from './lib/playlist';
+import {RADMUSEUM_SERVER, loadRadmuseum} from './lib/radmuseum';
 import {buildOptions, loadSettings, saveSettings, type Settings} from './lib/settings';
 
-const OPTIONS = buildOptions(COLLECTIONS);
 const FADE_MS = 1400;
 const KEY = {left: 37, up: 38, right: 39, down: 40, enter: 13, back: 8, webosBack: 461, escape: 27};
 
 export function App () {
 	const [settings, setSettings] = useState<Settings>(loadSettings);
+	const [collections, setCollections] = useState<string[]>(COLLECTIONS);
+	const [loadedExtra, setLoadedExtra] = useState(0);   // how many home-collection works the manifest added (0: not loaded yet or unavailable)
+	const options = useMemo(() => buildOptions(collections), [collections]);
 	const [slides, setSlides] = useState<Slide[]>([]);
 	const [panel, setPanel] = useState(false);
 	const [row, setRow] = useState(0);
@@ -36,6 +39,14 @@ export function App () {
 	settingsRef.current = settings;
 	const panelRef = useRef({panel, row});
 	panelRef.current = {panel, row};
+
+	// ---- the home collection from cybervolga: merged into the pool once the manifest arrives
+	useEffect(() => {
+		loadRadmuseum(RADMUSEUM_SERVER).then((list) => {
+			setCollections((old) => old.concat(list.map((a) => a.c).filter((c, i, arr) => arr.indexOf(c) === i && old.indexOf(c) === -1)));
+			setLoadedExtra(list.length);
+		}).catch(() => undefined);
+	}, []);
 
 	const update = useCallback((next: Settings) => { settingsRef.current = next; setSettings(next); saveSettings(next); }, []);
 	const say = useCallback((text: string) => {
@@ -77,7 +88,7 @@ export function App () {
 	}, [step]);
 
 	/** (re)build the playlist when the collection, the order or the favourites change */
-	const collectionKey = `${settings.collection}|${settings.shuffle}|${settings.people}|${settings.animals}|${settings.hidden.length}|${settings.islamic}|${settings.matte === 'fill'}|${settings.collection === 'Favorites' ? settings.favorites.join(',') : ''}`;
+	const collectionKey = `${settings.collection}|${settings.shuffle}|${settings.people}|${settings.animals}|${settings.hidden.length}|${settings.islamic}|${settings.matte === 'fill'}|${loadedExtra}|${settings.collection === 'Favorites' ? settings.favorites.join(',') : ''}`;
 	useEffect(() => {
 		const list = pool(settingsRef.current);
 		order.current = settingsRef.current.shuffle ? (settingsRef.current.collection === 'All' ? shuffledByCollection(list) : shuffled(list)) : list.slice();
@@ -101,7 +112,7 @@ export function App () {
 	}, [settings.sleepHours]);
 
 	// ---- settings panel
-	const rows = useMemo(() => buildRows(settings, OPTIONS, isFavorite, pool(settings).length, saverOn), [settings, isFavorite, saverOn]);
+	const rows = useMemo(() => buildRows(settings, options, isFavorite, pool(settings).length, saverOn), [settings, options, isFavorite, saverOn]);
 
 	const toggleFavorite = useCallback(() => {
 		const s = settingsRef.current;
@@ -134,14 +145,14 @@ export function App () {
 	}, []);
 
 	const change = useCallback((i: number, dir: number) => {
-		const def = OPTIONS[i];
+		const def = options[i];
 		if (!def) return;
 		const s = settingsRef.current;
 		const choices = def.choices(s);
 		const at = Math.max(0, choices.map((c) => c.value).indexOf(def.read(s)));
 		const next = choices[(at + dir + choices.length) % choices.length];
 		update(def.write(s, next.value));
-	}, [update]);
+	}, [update, options]);
 
 	const press = useCallback((i: number) => {
 		const key = rows[i] && rows[i].key;
@@ -151,7 +162,7 @@ export function App () {
 		else if (key === 'close') setPanel(false);
 		else if (key === 'saver') { const next = !saverOn; setSaverOn(next); writeSaverFlag(next).catch(() => { setSaverOn(!next); say("Couldn't change the screensaver (it needs the Homebrew Channel)"); }); }
 		else if (key === 'exit') exitToLauncher();
-		else if (i < OPTIONS.length) change(i, 1);
+		else if (i < options.length) change(i, 1);
 	}, [rows, toggleFavorite, change, saverOn, say, update]);
 
 	// ---- remote keys and pointer
@@ -163,8 +174,8 @@ export function App () {
 			e.preventDefault();
 			if (k === KEY.up) setRow((x) => Math.max(0, x - 1));
 			else if (k === KEY.down) setRow((x) => Math.min(rows.length - 1, x + 1));
-			else if (k === KEY.left) { if (r < OPTIONS.length) change(r, -1); }
-			else if (k === KEY.right) { if (r < OPTIONS.length) change(r, 1); }
+			else if (k === KEY.left) { if (r < options.length) change(r, -1); }
+			else if (k === KEY.right) { if (r < options.length) change(r, 1); }
 			else if (k === KEY.enter) press(r);
 			else if (k === KEY.back || k === KEY.webosBack || k === KEY.escape) setPanel(false);
 			return;

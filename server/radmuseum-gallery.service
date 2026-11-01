@@ -1,0 +1,12 @@
+[Unit]
+Description=Radmuseum gallery server for the Lumen Gallery TV app (manifest + JPEG over LAN)
+After=network.target mnt-homestorage.mount
+
+[Service]
+ExecStart=/usr/bin/python3 /home/alexey/my-lumen-gallery-webos/server/gallery_server.py
+Restart=always
+RestartSec=5
+User=alexey
+
+[Install]
+WantedBy=multi-user.target

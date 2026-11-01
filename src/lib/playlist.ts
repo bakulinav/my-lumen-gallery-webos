@@ -1,11 +1,12 @@
 // The order artworks are shown in: the chosen collection, shuffled or in order.
 
 import {ARTWORKS, type Artwork} from '../config/art';
+import {radmuseumArtworks, radmuseumServer} from './radmuseum';
 import type {Settings} from './settings';
 
 /** What may be shown: the chosen collection, minus works with people (unless allowed), and for the fill layout only wide pictures (so little is cropped). */
 export function pool (s: Settings): Artwork[] {
-	let list = ARTWORKS;
+	let list = ARTWORKS.concat(radmuseumArtworks());
 	if (s.hidden.length) list = list.filter((a) => s.hidden.indexOf(a.id) === -1);
 	if (s.people === 'hide') list = list.filter((a) => !a.p);
 	if (s.animals === 'hide') list = list.filter((a) => !a.n);
@@ -26,6 +27,7 @@ export function shuffled<T> (list: T[]): T[] {
 
 /** The picture, resized to the screen by images.weserv.nl (the Met's originals can be many megabytes). */
 export function imageUrl (a: Artwork): string {
+	if (a.s === 'r') return radmuseumServer() + '/images/' + encodeURIComponent(a.u);   // home collection on cybervolga
 	if (a.s === 'w') return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(a.u)}?width=1920`;   // Wikimedia Commons resizes on request
 	const host = a.s === 'c' ? 'openaccess-cdn.clevelandart.org/' : 'images.metmuseum.org/';
 	return `https://images.weserv.nl/?url=${encodeURIComponent(host + a.u)}&w=1920&h=1080&fit=inside&q=85&output=jpg`;
