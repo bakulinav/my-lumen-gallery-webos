@@ -17,6 +17,7 @@ Env:  GALLERY_DATA  path to radmuseum.json (default: ../tools/out/radmuseum.json
 """
 import json
 import os
+import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
