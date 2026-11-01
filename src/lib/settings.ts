@@ -25,6 +25,8 @@ export interface Settings {
 	animals: 'hide' | 'show';
 	/** pictures you chose to hide: they are never shown again (restore them in the settings) */
 	hidden: string[];
+	/** which libraries to show: everything, or the home Radmuseum collection only */
+	source: 'all' | 'home';
 	/** Islamic art (calligraphy, tiles, carpets ...) inside the All collection */
 	islamic: 'include' | 'exclude';
 	/** how much the picture is made to look like real paint on canvas */
@@ -39,7 +41,7 @@ export interface Settings {
 }
 
 export const DEFAULTS: Settings = {
-	collection: 'All', intervalSec: 60, shuffle: true, matte: 'fill', matteColor: 0, frame: 'walnut', frameWidth: 'medium', liner: 'none', people: 'hide', animals: 'hide', hidden: [], islamic: 'include', look: 'subtle', display: 'print',
+	collection: 'All', intervalSec: 60, shuffle: true, matte: 'fill', matteColor: 0, frame: 'walnut', frameWidth: 'medium', liner: 'none', people: 'hide', animals: 'hide', hidden: [], source: 'home', islamic: 'include', look: 'subtle', display: 'print',
 	details: 'change', clock: false, tone: 'night', dim: 0, sleepHours: 0, favorites: []
 };
 
@@ -84,6 +86,7 @@ const num = (id: 'intervalSec' | 'dim' | 'sleepHours' | 'matteColor') => (s: Set
 export function buildOptions (collections: string[]): OptionDef[] {
 	return [
 		{id: 'collection', label: 'Collection', choices: () => ['All', 'Favorites'].concat(collections).map((c) => ({value: c, label: c})), read: (s) => s.collection, write: (s, v) => ({...s, collection: v})},
+		{id: 'source', label: 'Library', choices: () => [{value: 'home', label: 'Radmuseum only'}, {value: 'all', label: 'All artworks'}], read: (s) => s.source, write: (s, v) => ({...s, source: v as Settings['source']})},
 		{id: 'intervalSec', label: 'Change every', choices: () => [[15, '15 seconds'], [30, '30 seconds'], [60, '1 minute'], [300, '5 minutes'], [900, '15 minutes'], [3600, '1 hour'], [21600, '6 hours'], [86400, '1 day']].map(([v, l]) => ({value: String(v), label: String(l)})), read: (s) => String(s.intervalSec), write: num('intervalSec')},
 		{id: 'shuffle', label: 'Order', choices: () => [{value: 'true', label: 'Shuffle'}, {value: 'false', label: 'In order'}], read: (s) => String(s.shuffle), write: (s, v) => ({...s, shuffle: v === 'true'})},
 		{id: 'matte', label: 'Matte', choices: () => [{value: 'fill', label: 'None, fill the screen'}, {value: 'none', label: 'None, whole picture'}, {value: 'modern', label: 'Modern'}, {value: 'wide', label: 'Modern wide'}, {value: 'flexible', label: 'Flexible'}, {value: 'shadowbox', label: 'Shadowbox'}], read: (s) => s.matte, write: (s, v) => ({...s, matte: v as MatteLayout})},

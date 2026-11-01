@@ -88,7 +88,7 @@ export function App () {
 	}, [step]);
 
 	/** (re)build the playlist when the collection, the order or the favourites change */
-	const collectionKey = `${settings.collection}|${settings.shuffle}|${settings.people}|${settings.animals}|${settings.hidden.length}|${settings.islamic}|${settings.matte === 'fill'}|${loadedExtra}|${settings.collection === 'Favorites' ? settings.favorites.join(',') : ''}`;
+	const collectionKey = `${settings.collection}|${settings.shuffle}|${settings.people}|${settings.animals}|${settings.hidden.length}|${settings.islamic}|${settings.source}|${settings.matte === 'fill'}|${loadedExtra}|${settings.collection === 'Favorites' ? settings.favorites.join(',') : ''}`;
 	useEffect(() => {
 		const list = pool(settingsRef.current);
 		order.current = settingsRef.current.shuffle ? (settingsRef.current.collection === 'All' ? shuffledByCollection(list) : shuffled(list)) : list.slice();
